@@ -26,7 +26,7 @@ void start_processes(){
     for (int i = 0; i < NUM_PROCESSES; i++){
         pid_t pid = fork();
         if (pid == 0){
-            srand(getpid());
+            //srand(getpid());
             while (pc[i] < MAX_ITERATIONS){
                 // Processos ficam aguardando por SIGCONT até serem retomados pelo KernelSim
                 kill(getpid(), SIGSTOP); // O processo fica pausado até o KernelSim retomar com SIGCONT
@@ -34,20 +34,19 @@ void start_processes(){
                 // Quando o processo é retomado, ele executa
                 pc[i]++;
                 printf("Processo %d executando, PC: %d\n", i, pc[i]);
-                sleep(1); // Simula o trabalho do processo
+                sleep(1); 
 
-                // Simulação de I/O (com 15% de chance)
                 if (rand() % 100 < 15){
                     int device = rand() % 2; // D1 ou D2
                     printf("Processo %d solicitou I/O no dispositivo D%d.\n", i, device + 1);
                     write(fd[1], &i, sizeof(i)); 
                     printf("Processo %d foi bloqueado.\n", i);
-                    blocked[i] = 1; // Marca o processo como bloqueado
-                    kill(getpid(), SIGSTOP); // Processo se bloqueia até que o I/O seja concluído
+                    blocked[i] = 1; 
+                    kill(getpid(), SIGSTOP);
                 }
             }
             printf("Processo %d atingiu o número máximo de iterações e será terminado.\n", i);
-            exit(0); // Termina o processo após atingir o número máximo de iterações
+            exit(0); 
         }
         else{
             processes[i] = pid; 
@@ -57,13 +56,12 @@ void start_processes(){
 }
 
 void start_kernel(){
-    signal(SIGALRM, handle_time_slice); // Configura o sinal de time slice (SIGALRM)
-    signal(SIGUSR1, handle_io_interrupt); // Configura o sinal de I/O (SIGUSR1)
+    signal(SIGALRM, handle_time_slice); 
+    signal(SIGUSR1, handle_io_interrupt); 
     
     alarm(TIME_SLICE); // Inicia o alarme para o primeiro time slice
 
     if (fork() == 0){ 
-        // InterController Sim como um processo separado
         inter_controller_sim();
         exit(0);
     }
@@ -85,7 +83,7 @@ void inter_controller_sim(){
 
         // Simula interrupção de I/O (IRQ1 ou IRQ2) com probabilidades
         if (rand() % 100 < 10){ 
-            kill(getppid(), SIGUSR1); // IRQ1 ou IRQ2 (I/O)
+            kill(getppid(), SIGUSR1); // IRQ1 ou IRQ2 
         }
     }
 }
@@ -125,13 +123,13 @@ int main(){
         exit(1);
     }
 
-    start_processes(); // Iniciar processos de aplicação
+    start_processes(); 
 
-    start_kernel(); // Iniciar o KernelSim
+    start_kernel(); 
 
     for (int i = 0; i < NUM_PROCESSES; i++){
-        wait(NULL); // Espera os processos filhos finalizarem
-        finished[i] = 1; // Marca o processo como terminado após o wait
+        wait(NULL); 
+        finished[i] = 1;
     }
 
     return 0;
